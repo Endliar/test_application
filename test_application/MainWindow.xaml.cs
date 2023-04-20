@@ -20,9 +20,19 @@ namespace test_application
 {
     public partial class MainWindow : Window
     {
+        public class Event
+        {
+            public string EventName { get; set; }
+            public int EventId { get; set; }
+        }
+
         public MainWindow()
         {
             InitializeComponent();
+        }
+
+        private void Window_Loaded(object sender, RoutedEventArgs e)
+        {
             NpgsqlConnection con = new NpgsqlConnection("Host=localhost;Port=5432;Database=test;Username=postgres;Password=0611");
             try
             {
@@ -39,34 +49,43 @@ namespace test_application
                 con.Close();
             }
 
-            string sql = $"SELECT * FROM test WHERE name = '{textBox_name.Text}'";
+            string sql = $"SELECT * FROM test";
             NpgsqlCommand command = new NpgsqlCommand(sql, con);
-            string name1 = "maxim";
-            string email1 = "maximus@outlook.com";
-            int age = 20;
-            NpgsqlCommand new_command = new NpgsqlCommand("insert into test values ('@name', '@email', '@age')", con);
-            command.Parameters.AddWithValue(new NpgsqlParameter("@name", name1));
-            command.Parameters.AddWithValue(new NpgsqlParameter("@email", email1));
-            command.Parameters.AddWithValue(new NpgsqlParameter("@age", age));
-            new_command.ExecuteNonQuery();
-
-            command.Parameters.Add(new NpgsqlParameter("@name", textBox_name.Text));
 
             DataTable dt = new DataTable();
-            ;
             dt.Load(command.ExecuteReader(CommandBehavior.CloseConnection));
             DataGrid1.DataContext = dt;
             DataGrid1.ItemsSource = dt.AsDataView();
         }
 
-        private void Window_Loaded(object sender, RoutedEventArgs e)
+        private void click(object sender, RoutedEventArgs e)
         {
+            NpgsqlConnection con = new NpgsqlConnection("Host=localhost;Port=5432;Database=test;Username=postgres;Password=0611");
+            try
+            {
+                con.Open();
+            }
+            catch (NpgsqlException ex)
+            {
+                MessageBox.Show(ex.Message);
+                con.Close();
+            }
+            catch (System.IO.IOException)
+            {
+                MessageBox.Show("Error");
+                con.Close();
+            }
             
-        }
-
-        private void TextBox_TextChanged(object sender, TextChangedEventArgs e)
-        {
-
+                string sql = "INSERT INTO test(name, email, age) VALUES (@name, @email, @age)";
+                NpgsqlCommand command = new NpgsqlCommand(sql, con);
+                command.Parameters.Add(new NpgsqlParameter("@name", textBox_name.Text));
+                command.Parameters.Add(new NpgsqlParameter("@email", textBox_email.Text));
+                string text_age = textBox_age.Text;
+                int age;
+                bool isConvToInt = int.TryParse(textBox_age.Text, out age);
+                command.Parameters.Add(new NpgsqlParameter("@age", age));
+                command.ExecuteNonQuery();
         }
     }
+
 }
