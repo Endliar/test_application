@@ -1,90 +1,130 @@
 ﻿using Npgsql;
-using System;
-using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Data;
-using System.Linq;
-using System.Security.RightsManagement;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 
 namespace test_application
 {
     public partial class MainWindow : Window
     {
-        public class Event
-        {
-            public string EventName { get; set; }
-            public int EventId { get; set; }
-        }
+        public ObservableCollection<Student> Students { get; set; } = new ObservableCollection<Student>();
 
         public MainWindow()
         {
             InitializeComponent();
         }
 
-        private void Window_Loaded(object sender, RoutedEventArgs e)
+        private async Task Data()
         {
-            NpgsqlConnection con = new NpgsqlConnection("Host=localhost;Port=5432;Database=test;Username=postgres;Password=0611");
+            var connectionString = "Host=localhost;Port=5432;Database=test;Username=postgres;Password=0611";
+            await using (NpgsqlConnection con = new NpgsqlConnection(connectionString))
+            {
+                try
+                {
+                    await con.OpenAsync();
+                    var sql = @"SELECT s.student_id, s.full_name, g.physics_grade, g.math_grade FROM students s JOIN grades g ON s.student_id = g.student_id";
+                    await using (var command = new NpgsqlCommand(sql, con))
+                    {
+                        var dt = new DataTable();
+                        await using (var reader = await command.ExecuteReaderAsync(CommandBehavior.CloseConnection))
+                        {
+                            dt.Load(reader);
+                        }
+                        DataGrid1.DataContext = dt;
+                        DataGrid1.ItemsSource = dt.AsDataView();
+                    }
+                }
+                catch (NpgsqlException ex)
+                {
+                    MessageBox.Show(ex.Message);
+                }
+                catch (System.IO.IOException ex)
+                {
+                    MessageBox.Show("Error: " + ex.Message);
+                }
+            }
+        }
+
+        private void RefreshStudentList()
+        {
+            string connectionString = "Host=localhost;Port=5432;Database=test;Username=postgres;Password=0611";
+            string sql = "SELECT students.student_id, full_name, physics_grade, math_grade FROM students INNER JOIN grades ON students.student_id = grades.student_id;";
+
+            using NpgsqlConnection con = new NpgsqlConnection(connectionString);
             try
             {
                 con.Open();
-            }
-            catch (NpgsqlException ex)
-            {
-                MessageBox.Show(ex.Message);
-                con.Close();
-            }
-            catch (System.IO.IOException)
-            {
-                MessageBox.Show("Error");
-                con.Close();
-            }
 
-            string sql = $"SELECT * FROM test";
-            NpgsqlCommand command = new NpgsqlCommand(sql, con);
+                using NpgsqlCommand npgsqlCommand = new NpgsqlCommand(sql, con);
+                using NpgsqlDataReader npgsqlDataReader = npgsqlCommand.ExecuteReader();
 
-            DataTable dt = new DataTable();
-            dt.Load(command.ExecuteReader(CommandBehavior.CloseConnection));
-            DataGrid1.DataContext = dt;
-            DataGrid1.ItemsSource = dt.AsDataView();
+                Students.Clear();
+
+                while(npgsqlDataReader.Read())
+                {
+                    Student student = new Student() { StudentId = npgsqlDataReader.GetInt32(0), FullName = npgsqlDataReader.GetString(1), PhysicsGrade = npgsqlDataReader.GetInt32(2), MathGrade = npgsqlDataReader.GetInt32(3) };
+                    Students.Add(student);
+                }
+                DataGrid1.ItemsSource = Students;
+            } catch (NpgsqlException ex)
+            {
+                MessageBox.Show("Database error: " + ex.Message);
+            } finally
+            {
+                if (con.State == ConnectionState.Open)
+                {
+                    con.Close();
+                }
+            }
+        }
+
+        private async void Window_Loaded(object sender, RoutedEventArgs e)
+        {
+            await Data();
         }
 
         private void click(object sender, RoutedEventArgs e)
         {
-            NpgsqlConnection con = new NpgsqlConnection("Host=localhost;Port=5432;Database=test;Username=postgres;Password=0611");
+            string connectionString = "Host=localhost;Port=5432;Database=test;Username=postgres;Password=0611";
+
+            int.TryParse(textBox_physics_grade.Text, out int physiscsGrade);
+            int.TryParse(textBox_math_grade.Text, out int mathGrade);
+            using NpgsqlConnection con = new NpgsqlConnection(connectionString);
+
             try
             {
                 con.Open();
-            }
-            catch (NpgsqlException ex)
-            {
-                MessageBox.Show(ex.Message);
-                con.Close();
-            }
-            catch (System.IO.IOException)
-            {
-                MessageBox.Show("Error");
-                con.Close();
-            }
-            
-                string sql = "INSERT INTO test(name, email, age) VALUES (@name, @email, @age)";
-                NpgsqlCommand command = new NpgsqlCommand(sql, con);
-                command.Parameters.Add(new NpgsqlParameter("@name", textBox_name.Text));
-                command.Parameters.Add(new NpgsqlParameter("@email", textBox_email.Text));
-                string text_age = textBox_age.Text;
-                int age;
-                bool isConvToInt = int.TryParse(textBox_age.Text, out age);
-                command.Parameters.Add(new NpgsqlParameter("@age", age));
+
+                string sqlStudent = "INSERT INTO students (full_name) VALUES (@name) RETURNING student_id";
+                using NpgsqlCommand commandStudent = new NpgsqlCommand(sqlStudent, con);
+                commandStudent.Parameters.AddWithValue("@name", textBox_full_name.Text);
+
+                int studentId = (int)commandStudent.ExecuteScalar();
+
+                string sqlGrades = "INSERT INTO grades (student_id, physics_grade, math_grade) VALUES (@student_id, @physicsgrade, @mathgrade)";
+                using NpgsqlCommand command = new NpgsqlCommand(sqlGrades, con);
+                command.Parameters.AddWithValue("@student_id", studentId);
+                command.Parameters.AddWithValue("@physicsgrade", physiscsGrade);
+                command.Parameters.AddWithValue("@mathgrade", mathGrade);
+
                 command.ExecuteNonQuery();
+            } catch (NpgsqlException ex)
+            {
+                MessageBox.Show("Database error: " + ex.Message);
+            } catch (System.IO.IOException ex)
+            {
+                MessageBox.Show("IO errorL " + ex.Message);
+            } finally
+            {
+                if (con.State == ConnectionState.Open)
+                {
+                    con.Close();
+                }
+            }
+
+            RefreshStudentList();
+           
         }
     }
 
