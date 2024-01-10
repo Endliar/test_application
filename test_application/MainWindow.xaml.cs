@@ -1,8 +1,10 @@
 ﻿using Npgsql;
 using System.Collections.ObjectModel;
 using System.Data;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Controls;
 
 namespace test_application
 {
@@ -13,6 +15,8 @@ namespace test_application
         public MainWindow()
         {
             InitializeComponent();
+            DataGrid1.ItemsSource = Students;
+            RefreshStudentList();
         }
 
         private async Task Data()
@@ -124,7 +128,45 @@ namespace test_application
             }
 
             RefreshStudentList();
-           
+        }
+
+        private void DataGrid_CellEditEnding(object sender, DataGridCellEditEndingEventArgs e)
+        {
+            if (e.EditAction == DataGridEditAction.Commit)
+            {
+                Student editedStudent = e.Row.Item as Student;
+                if (editedStudent != null)
+                {
+                    UpdateStudent(editedStudent);
+                }
+            }
+        }
+
+        private void UpdateStudent(Student student)
+        {
+            string connectionString = "Host=localhost;Port=5432;Database=test;Username=postgres;Password=0611";
+            string sql = $"UPDATE students SET full_name = @fullname, physics_grade = @physicsgrade, math_grade = @mathgrade WHERE student_id = @studentid";
+
+            using NpgsqlConnection con = new NpgsqlConnection(connectionString);
+            try
+            {
+                con.Open();
+                using NpgsqlCommand npgsqlCommand = new NpgsqlCommand(sql, con);
+                npgsqlCommand.Parameters.AddWithValue("@studentid", student.StudentId);
+                npgsqlCommand.Parameters.AddWithValue("@fullname", student.FullName);
+                npgsqlCommand.Parameters.AddWithValue("@physicsgrade", student.PhysicsGrade);
+                npgsqlCommand.Parameters.AddWithValue("@mathgrade", student.MathGrade);
+                npgsqlCommand.ExecuteNonQuery();
+            } catch (NpgsqlException ex)
+            {
+                MessageBox.Show("Database error: " + ex.Message);
+            } finally
+            {
+                if (con.State == ConnectionState.Open)
+                {
+                    con.Close();
+                }
+            }
         }
     }
 

@@ -8,9 +8,16 @@
         Title="MainWindow" Height="449" Width="800"
         Loaded="Window_Loaded"
         >
-    <Grid>
+    <Grid DataContext="{ Binding Students}">
         <TextBox HorizontalAlignment="Center" Name="textBox_physics_grade" Margin="0,299,0,0" VerticalAlignment="Top" Width="120" />
-        <DataGrid  Margin="0,0,0,216" Name="DataGrid1" AutoGenerateColumns="True" IsReadOnly="False"></DataGrid>
+        <DataGrid  Margin="0,0,0,216" Name="DataGrid1" AutoGenerateColumns="True" IsReadOnly="False" CellEditEnding="DataGrid_CellEditEnding">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="ID" Binding="{Binding StudentId}"/>
+                <DataGridTextColumn Header="full_name" Binding="{Binding FullName}"/>
+                <DataGridTextColumn Header="physics_govno" Binding="{Binding PhysicsGrade}"/>
+                <DataGridTextColumn Header="math_grade" Binding="{Binding MathGrade}"/>
+            </DataGrid.Columns>
+        </DataGrid>
         <TextBox HorizontalAlignment="Center" x:Name="textBox_full_name" Margin="0,266,0,0" VerticalAlignment="Top" Width="120" />
         <TextBox HorizontalAlignment="Center" x:Name="textBox_math_grade" Margin="0,331,0,0" VerticalAlignment="Top" Width="120" />
         <Label Content="Регистрация" HorizontalAlignment="Center" Margin="0,229,0,0" VerticalAlignment="Top" Width="140" HorizontalContentAlignment="Center"/>
