@@ -70,7 +70,6 @@ namespace test_application
                     Student student = new Student() { StudentId = npgsqlDataReader.GetInt32(0), FullName = npgsqlDataReader.GetString(1), PhysicsGrade = npgsqlDataReader.GetInt32(2), MathGrade = npgsqlDataReader.GetInt32(3) };
                     Students.Add(student);
                 }
-                DataGrid1.ItemsSource = Students;
             } catch (NpgsqlException ex)
             {
                 MessageBox.Show("Database error: " + ex.Message);
@@ -134,7 +133,7 @@ namespace test_application
         {
             if (e.EditAction == DataGridEditAction.Commit)
             {
-                Student editedStudent = e.Row.Item as Student;
+                var editedStudent = e.Row.Item as Student;
                 if (editedStudent != null)
                 {
                     UpdateStudent(editedStudent);
