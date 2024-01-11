@@ -10,18 +10,23 @@ namespace test_application
 {
     public partial class MainWindow : Window
     {
-        public ObservableCollection<Student> Students { get; set; } = new ObservableCollection<Student>();
+        private readonly string connectionString = "Host=localhost;Port=5432;Database=test;Username=postgres;Password=0611";
+        private ObservableCollection<Student> Students { get; set; } = new ObservableCollection<Student>();
 
         public MainWindow()
         {
             InitializeComponent();
+            DataContext = this;
             DataGrid1.ItemsSource = Students;
-            RefreshStudentList();
+        }
+
+        private async void Window_Loaded(object sender, RoutedEventArgs e)
+        {
+            await Data();
         }
 
         private async Task Data()
         {
-            var connectionString = "Host=localhost;Port=5432;Database=test;Username=postgres;Password=0611";
             await using (NpgsqlConnection con = new NpgsqlConnection(connectionString))
             {
                 try
@@ -30,13 +35,25 @@ namespace test_application
                     var sql = @"SELECT s.student_id, s.full_name, g.physics_grade, g.math_grade FROM students s JOIN grades g ON s.student_id = g.student_id";
                     await using (var command = new NpgsqlCommand(sql, con))
                     {
-                        var dt = new DataTable();
-                        await using (var reader = await command.ExecuteReaderAsync(CommandBehavior.CloseConnection))
+                        await using (var reader  = await command.ExecuteReaderAsync(CommandBehavior.CloseConnection)) 
                         {
-                            dt.Load(reader);
+                            Students.Clear();
+                            while (await reader.ReadAsync())
+                            {
+                                var studentId = reader.GetInt32(reader.GetOrdinal("student_id"));
+                                var fullName = reader.GetString(reader.GetOrdinal("full_name"));
+                                var physicsGrade = reader.GetInt32(reader.GetOrdinal("physics_grade"));
+                                var mathGrade = reader.GetInt32(reader.GetOrdinal("math_grade"));
+
+                                Students.Add(new Student
+                                {
+                                    StudentId = studentId,
+                                    FullName = fullName,
+                                    PhysicsGrade = physicsGrade,
+                                    MathGrade = mathGrade
+                                });
+                            }
                         }
-                        DataGrid1.DataContext = dt;
-                        DataGrid1.ItemsSource = dt.AsDataView();
                     }
                 }
                 catch (NpgsqlException ex)
@@ -52,18 +69,13 @@ namespace test_application
 
         private void RefreshStudentList()
         {
-            string connectionString = "Host=localhost;Port=5432;Database=test;Username=postgres;Password=0611";
             string sql = "SELECT students.student_id, full_name, physics_grade, math_grade FROM students INNER JOIN grades ON students.student_id = grades.student_id;";
-
             using NpgsqlConnection con = new NpgsqlConnection(connectionString);
             try
             {
                 con.Open();
-
                 using NpgsqlCommand npgsqlCommand = new NpgsqlCommand(sql, con);
                 using NpgsqlDataReader npgsqlDataReader = npgsqlCommand.ExecuteReader();
-
-                Students.Clear();
 
                 while(npgsqlDataReader.Read())
                 {
@@ -82,15 +94,8 @@ namespace test_application
             }
         }
 
-        private async void Window_Loaded(object sender, RoutedEventArgs e)
-        {
-            await Data();
-        }
-
         private void click(object sender, RoutedEventArgs e)
         {
-            string connectionString = "Host=localhost;Port=5432;Database=test;Username=postgres;Password=0611";
-
             int.TryParse(textBox_physics_grade.Text, out int physiscsGrade);
             int.TryParse(textBox_math_grade.Text, out int mathGrade);
             using NpgsqlConnection con = new NpgsqlConnection(connectionString);
@@ -125,7 +130,6 @@ namespace test_application
                     con.Close();
                 }
             }
-
             RefreshStudentList();
         }
 
@@ -133,7 +137,24 @@ namespace test_application
         {
             if (e.EditAction == DataGridEditAction.Commit)
             {
+                var cellContent = e.EditingElement as TextBox;
+                var editedCellValue = cellContent.Text;
                 var editedStudent = e.Row.Item as Student;
+
+                var columnName = e.Column.SortMemberPath;
+                if (columnName == "FullName")
+                {
+                    editedStudent.FullName = editedCellValue;
+                }
+                else if (columnName == "PhysicsGrade")
+                {
+                    editedStudent.PhysicsGrade = int.TryParse(editedCellValue, out int newGrade) ? newGrade : editedStudent.PhysicsGrade;
+                }
+                else if (columnName == "MathGrade")
+                {
+                    editedStudent.MathGrade = int.TryParse(editedCellValue, out int newGrade) ? newGrade : editedStudent.MathGrade;
+                }
+
                 if (editedStudent != null)
                 {
                     UpdateStudent(editedStudent);
@@ -143,26 +164,28 @@ namespace test_application
 
         private void UpdateStudent(Student student)
         {
-            string connectionString = "Host=localhost;Port=5432;Database=test;Username=postgres;Password=0611";
-            string sql = $"UPDATE students SET full_name = @fullname, physics_grade = @physicsgrade, math_grade = @mathgrade WHERE student_id = @studentid";
+            string sqlUpdateStudent = "UPDATE students SET full_name = @fullname WHERE student_id = @studentid";
+            string sqlUpdateGrades = "UPDATE grades SET physics_grade = @physicsgrade, math_grade = @mathgrade WHERE student_id = @studentid";
 
             using NpgsqlConnection con = new NpgsqlConnection(connectionString);
             try
             {
                 con.Open();
-                using NpgsqlCommand npgsqlCommand = new NpgsqlCommand(sql, con);
-                npgsqlCommand.Parameters.AddWithValue("@studentid", student.StudentId);
-                npgsqlCommand.Parameters.AddWithValue("@fullname", student.FullName);
-                npgsqlCommand.Parameters.AddWithValue("@physicsgrade", student.PhysicsGrade);
-                npgsqlCommand.Parameters.AddWithValue("@mathgrade", student.MathGrade);
-                npgsqlCommand.ExecuteNonQuery();
-            } catch (NpgsqlException ex)
-            {
+                
+                using NpgsqlCommand cmdUpdateStudent = new NpgsqlCommand(sqlUpdateStudent, con);
+                cmdUpdateStudent.Parameters.AddWithValue("@studentid", student.StudentId);
+                cmdUpdateStudent.Parameters.AddWithValue("@fullname", student.FullName);
+                cmdUpdateStudent.ExecuteNonQuery();
+                
+                using NpgsqlCommand cmdUpdateGrades = new NpgsqlCommand(sqlUpdateGrades, con);
+                cmdUpdateGrades.Parameters.AddWithValue("@studentid", student.StudentId);
+                cmdUpdateGrades.Parameters.AddWithValue("@physicsgrade", student.PhysicsGrade);
+                cmdUpdateGrades.Parameters.AddWithValue("@mathgrade", student.MathGrade);
+                cmdUpdateGrades.ExecuteNonQuery();
+            } catch (NpgsqlException ex) {
                 MessageBox.Show("Database error: " + ex.Message);
-            } finally
-            {
-                if (con.State == ConnectionState.Open)
-                {
+            } finally {
+                if (con.State == ConnectionState.Open) {
                     con.Close();
                 }
             }
@@ -170,3 +193,4 @@ namespace test_application
     }
 
 }
+    

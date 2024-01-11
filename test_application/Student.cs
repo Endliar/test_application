@@ -11,13 +11,13 @@ namespace test_application
     public class Student : INotifyPropertyChanged
     {
         private int studentId;
-        [Column("student_id")]public int StudentId { get { return studentId; } set { studentId = value; OnPropertyChanged("StudentId"); } }
-        private string? fullName;
-        [Column("full_name")]public string FullName { get { return fullName; } set { fullName = value; OnPropertyChanged(nameof(FullName)); } }
+        public int StudentId { get { return studentId; } set { studentId = value; OnPropertyChanged("StudentId"); } }
+        private string fullName;
+        public string FullName { get { return fullName; } set { fullName = value; OnPropertyChanged(nameof(FullName)); } }
         private int physicsGrade;
-        [Column("physics_grade")]public int PhysicsGrade { get { return physicsGrade; } set { physicsGrade = value; OnPropertyChanged(nameof(PhysicsGrade)); } }
+        public int PhysicsGrade { get { return physicsGrade; } set { physicsGrade = value; OnPropertyChanged(nameof(PhysicsGrade)); } }
         private int mathGrade;
-        [Column("math_grade")]public int MathGrade { get { return mathGrade; } set { mathGrade = value; OnPropertyChanged(nameof(MathGrade)); } }
+        public int MathGrade { get { return mathGrade; } set { mathGrade = value; OnPropertyChanged(nameof(MathGrade)); } }
 
         public event PropertyChangedEventHandler? PropertyChanged;
         protected void OnPropertyChanged(string propertyName)
