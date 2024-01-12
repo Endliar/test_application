@@ -14,6 +14,8 @@ namespace test_application
         public int StudentId { get { return studentId; } set { studentId = value; OnPropertyChanged("StudentId"); } }
         private string fullName;
         public string FullName { get { return fullName; } set { fullName = value; OnPropertyChanged(nameof(FullName)); } }
+        private string phoneNumber;
+        public string PhoneNUmber { get { return phoneNumber; } set { phoneNumber = value; OnPropertyChanged(nameof(PhoneNUmber)); } }
         private int physicsGrade;
         public int PhysicsGrade { get { return physicsGrade; } set { physicsGrade = value; OnPropertyChanged(nameof(PhysicsGrade)); } }
         private int mathGrade;

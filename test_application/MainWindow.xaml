@@ -5,27 +5,30 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:test_application"
         mc:Ignorable="d"
-        Title="MainWindow" Height="449" Width="800"
+        Title="MainWindow" Height="473" Width="800"
         Loaded="Window_Loaded"
         >
     <Grid>
         <TextBox HorizontalAlignment="Center" Name="textBox_physics_grade" Margin="0,299,0,0" VerticalAlignment="Top" Width="120" />
-        <DataGrid  Margin="0,0,0,216" Name="DataGrid1" AutoGenerateColumns="False" ItemsSource="{Binding Students}" IsReadOnly="False" CellEditEnding="DataGrid_CellEditEnding">
+        <DataGrid  Margin="0,0,0,227" Name="DataGrid1" AutoGenerateColumns="False" ItemsSource="{Binding Students}" IsReadOnly="False" CellEditEnding="DataGrid_CellEditEnding">
             <DataGrid.Columns>
                 <DataGridTextColumn Header="ID" Binding="{Binding StudentId}"/>
                 <DataGridTextColumn Header="full_name" Binding="{Binding FullName}"/>
                 <DataGridTextColumn Header="physics_grade" Binding="{Binding PhysicsGrade}"/>
                 <DataGridTextColumn Header="math_grade" Binding="{Binding MathGrade}"/>
+                <DataGridTextColumn Header="phone_number" Binding="{Binding PhoneNumber}"/>
             </DataGrid.Columns>
         </DataGrid>
         <TextBox HorizontalAlignment="Center" x:Name="textBox_full_name" Margin="0,266,0,0" VerticalAlignment="Top" Width="120" />
         <TextBox HorizontalAlignment="Center" x:Name="textBox_math_grade" Margin="0,331,0,0" VerticalAlignment="Top" Width="120" />
-        <Label Content="Регистрация" HorizontalAlignment="Center" Margin="0,229,0,0" VerticalAlignment="Top" Width="140" HorizontalContentAlignment="Center"/>
+        <Label Content="Регистрация" HorizontalAlignment="Center" Margin="0,235,0,0" VerticalAlignment="Top" Width="140" HorizontalContentAlignment="Center"/>
         <Label Content="Имя студента:" HorizontalAlignment="Left" Margin="182,263,0,0" VerticalAlignment="Top" Width="145" HorizontalContentAlignment="Center" Height="23"/>
         <Label Content="Оценка по математике:" HorizontalAlignment="Left" Margin="182,326,0,0" VerticalAlignment="Top" Width="145" HorizontalContentAlignment="Center" Height="27"/>
         <Label Content="Оценка по физике:" HorizontalAlignment="Left" Margin="182,296,0,0" VerticalAlignment="Top" Width="145" HorizontalContentAlignment="Center" Height="23"/>
-        <Button Content="Добавить студента" HorizontalAlignment="Center" Margin="0,376,0,0" VerticalAlignment="Top" Width="120" Click="click"/>
+        <Button Content="Добавить студента" HorizontalAlignment="Center" Margin="0,398,0,0" VerticalAlignment="Top" Width="120" Click="click"/>
         <Button Content="Удалить студента" HorizontalAlignment="Left" Margin="537,376,0,0" VerticalAlignment="Top" Width="120" Click="DeleteStudent_Click"/>
+        <Label Content="Номер телефона:" HorizontalAlignment="Left" Margin="182,358,0,0" VerticalAlignment="Top" Width="145" HorizontalContentAlignment="Center" Height="27"/>
+        <TextBox HorizontalAlignment="Center" x:Name="textBox_phone_number" PreviewTextInput="textBox_phone_number_PreviewTextInput" Margin="0,362,0,0" Width="120" Height="19" VerticalAlignment="Top" />
     </Grid>
 
 </Window>

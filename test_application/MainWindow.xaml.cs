@@ -2,9 +2,11 @@
 using System.Collections.ObjectModel;
 using System.Data;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 
 namespace test_application
 {
@@ -69,7 +71,7 @@ namespace test_application
 
         private void RefreshStudentList()
         {
-            string sql = "SELECT students.student_id, full_name, physics_grade, math_grade FROM students INNER JOIN grades ON students.student_id = grades.student_id;";
+            string sql = "SELECT students.student_id, full_name, physics_grade, math_grade, phone_number FROM students INNER JOIN grades ON students.student_id = grades.student_id;";
             using NpgsqlConnection con = new NpgsqlConnection(connectionString);
             try
             {
@@ -79,7 +81,7 @@ namespace test_application
 
                 while(npgsqlDataReader.Read())
                 {
-                    Student student = new Student() { StudentId = npgsqlDataReader.GetInt32(0), FullName = npgsqlDataReader.GetString(1), PhysicsGrade = npgsqlDataReader.GetInt32(2), MathGrade = npgsqlDataReader.GetInt32(3) };
+                    Student student = new Student() { StudentId = npgsqlDataReader.GetInt32(0), FullName = npgsqlDataReader.GetString(1), PhysicsGrade = npgsqlDataReader.GetInt32(2), MathGrade = npgsqlDataReader.GetInt32(3), PhoneNUmber = npgsqlDataReader.GetString(4) };
                     Students.Add(student);
                 }
             } catch (NpgsqlException ex)
@@ -94,6 +96,12 @@ namespace test_application
             }
         }
 
+        private void textBox_phone_number_PreviewTextInput(object sender, TextCompositionEventArgs e)
+        {
+            Regex regex = new Regex("[^0-9]+");
+            e.Handled = regex.IsMatch(e.Text);
+        }
+
         private void click(object sender, RoutedEventArgs e)
         {
             int.TryParse(textBox_physics_grade.Text, out int physiscsGrade);
@@ -104,9 +112,10 @@ namespace test_application
             {
                 con.Open();
 
-                string sqlStudent = "INSERT INTO students (full_name) VALUES (@name) RETURNING student_id";
+                string sqlStudent = "INSERT INTO students (full_name, phone_number) VALUES (@name, @phone) RETURNING student_id";
                 using NpgsqlCommand commandStudent = new NpgsqlCommand(sqlStudent, con);
                 commandStudent.Parameters.AddWithValue("@name", textBox_full_name.Text);
+                commandStudent.Parameters.AddWithValue("@phone", textBox_phone_number.Text);
 
                 int studentId = (int)commandStudent.ExecuteScalar();
 
