@@ -25,6 +25,7 @@
         <Label Content="Оценка по математике:" HorizontalAlignment="Left" Margin="182,326,0,0" VerticalAlignment="Top" Width="145" HorizontalContentAlignment="Center" Height="27"/>
         <Label Content="Оценка по физике:" HorizontalAlignment="Left" Margin="182,296,0,0" VerticalAlignment="Top" Width="145" HorizontalContentAlignment="Center" Height="23"/>
         <Button Content="Добавить студента" HorizontalAlignment="Center" Margin="0,376,0,0" VerticalAlignment="Top" Width="120" Click="click"/>
+        <Button Content="Удалить студента" HorizontalAlignment="Left" Margin="537,376,0,0" VerticalAlignment="Top" Width="120" Click="DeleteStudent_Click"/>
     </Grid>
 
 </Window>

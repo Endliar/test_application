@@ -190,6 +190,47 @@ namespace test_application
                 }
             }
         }
+
+        private void DeleteStudent_Click(object sender, RoutedEventArgs e)
+        {
+            var selectedStudent = DataGrid1.SelectedItem as Student;
+            if (selectedStudent == null)
+            {
+                MessageBox.Show("Выберите студента для удаления");
+                return;
+            }
+
+            string sqlDeleteStudent = "DELETE FROM students WHERE student_id = @studentid";
+            string sqlDeleteGrades = "DELETE FROM grades WHERE student_id = @studentid";
+
+            using (NpgsqlConnection con = new NpgsqlConnection(connectionString))
+            {
+                con.Open();
+                using (NpgsqlTransaction trans = con.BeginTransaction())
+                {
+                    try
+                    {
+                        using (NpgsqlCommand cmdDeleteGrades = new NpgsqlCommand(sqlDeleteGrades, con))
+                        {
+                            cmdDeleteGrades.Parameters.AddWithValue("@studentid", selectedStudent.StudentId);
+                            cmdDeleteGrades.ExecuteNonQuery();
+                        }
+                        using (NpgsqlCommand cmdDeleteStudent = new NpgsqlCommand(sqlDeleteStudent, con))
+                        {
+                            cmdDeleteStudent.Parameters.AddWithValue("@studentid", selectedStudent.StudentId);
+                            cmdDeleteStudent.ExecuteNonQuery();
+                        }
+
+                        trans.Commit();
+                        Students.Remove(selectedStudent);
+                    } catch (NpgsqlException ex)
+                    {
+                        trans.Rollback();
+                        MessageBox.Show("Не удалось удалить студента. Возможно, у него есть связанные данные." + ex.Message);
+                    }
+                }
+            }
+        }
     }
 
 }
