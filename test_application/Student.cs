@@ -15,7 +15,7 @@ namespace test_application
         private string fullName;
         public string FullName { get { return fullName; } set { fullName = value; OnPropertyChanged(nameof(FullName)); } }
         private string phoneNumber;
-        public string PhoneNUmber { get { return phoneNumber; } set { phoneNumber = value; OnPropertyChanged(nameof(PhoneNUmber)); } }
+        public string PhoneNumber { get { return phoneNumber; } set { phoneNumber = value; OnPropertyChanged(nameof(PhoneNumber)); } }
         private int physicsGrade;
         public int PhysicsGrade { get { return physicsGrade; } set { physicsGrade = value; OnPropertyChanged(nameof(PhysicsGrade)); } }
         private int mathGrade;

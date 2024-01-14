@@ -34,7 +34,7 @@ namespace test_application
                 try
                 {
                     await con.OpenAsync();
-                    var sql = @"SELECT s.student_id, s.full_name, g.physics_grade, g.math_grade FROM students s JOIN grades g ON s.student_id = g.student_id";
+                    var sql = @"SELECT s.student_id, s.full_name, s.phone_number, g.physics_grade, g.math_grade FROM students s JOIN grades g ON s.student_id = g.student_id";
                     await using (var command = new NpgsqlCommand(sql, con))
                     {
                         await using (var reader  = await command.ExecuteReaderAsync(CommandBehavior.CloseConnection)) 
@@ -46,13 +46,15 @@ namespace test_application
                                 var fullName = reader.GetString(reader.GetOrdinal("full_name"));
                                 var physicsGrade = reader.GetInt32(reader.GetOrdinal("physics_grade"));
                                 var mathGrade = reader.GetInt32(reader.GetOrdinal("math_grade"));
+                                var phoneNumber = reader.GetString(reader.GetOrdinal("phone_number"));
 
                                 Students.Add(new Student
                                 {
                                     StudentId = studentId,
                                     FullName = fullName,
                                     PhysicsGrade = physicsGrade,
-                                    MathGrade = mathGrade
+                                    MathGrade = mathGrade,
+                                    PhoneNumber = phoneNumber
                                 });
                             }
                         }
@@ -71,8 +73,9 @@ namespace test_application
 
         private void RefreshStudentList()
         {
-            string sql = "SELECT students.student_id, full_name, physics_grade, math_grade, phone_number FROM students INNER JOIN grades ON students.student_id = grades.student_id;";
+            string sql = "SELECT students.student_id, full_name, physics_grade, math_grade, phone_number FROM students LEFT JOIN grades ON students.student_id = grades.student_id;";
             using NpgsqlConnection con = new NpgsqlConnection(connectionString);
+            Students.Clear();
             try
             {
                 con.Open();
@@ -81,7 +84,7 @@ namespace test_application
 
                 while(npgsqlDataReader.Read())
                 {
-                    Student student = new Student() { StudentId = npgsqlDataReader.GetInt32(0), FullName = npgsqlDataReader.GetString(1), PhysicsGrade = npgsqlDataReader.GetInt32(2), MathGrade = npgsqlDataReader.GetInt32(3), PhoneNUmber = npgsqlDataReader.GetString(4) };
+                    Student student = new Student() { StudentId = npgsqlDataReader.GetInt32(0), FullName = npgsqlDataReader.GetString(1), PhysicsGrade = npgsqlDataReader.GetInt32(2), MathGrade = npgsqlDataReader.GetInt32(3), PhoneNumber = npgsqlDataReader.GetString(4) };
                     Students.Add(student);
                 }
             } catch (NpgsqlException ex)
@@ -163,6 +166,10 @@ namespace test_application
                 {
                     editedStudent.MathGrade = int.TryParse(editedCellValue, out int newGrade) ? newGrade : editedStudent.MathGrade;
                 }
+                else if (columnName == "PhoneNumber")
+                {
+                    editedStudent.PhoneNumber = editedCellValue;
+                }
 
                 if (editedStudent != null)
                 {
@@ -173,7 +180,7 @@ namespace test_application
 
         private void UpdateStudent(Student student)
         {
-            string sqlUpdateStudent = "UPDATE students SET full_name = @fullname WHERE student_id = @studentid";
+            string sqlUpdateStudent = "UPDATE students SET full_name = @fullname, phone_number = @phonenumber WHERE student_id = @studentid";
             string sqlUpdateGrades = "UPDATE grades SET physics_grade = @physicsgrade, math_grade = @mathgrade WHERE student_id = @studentid";
 
             using NpgsqlConnection con = new NpgsqlConnection(connectionString);
@@ -184,6 +191,7 @@ namespace test_application
                 using NpgsqlCommand cmdUpdateStudent = new NpgsqlCommand(sqlUpdateStudent, con);
                 cmdUpdateStudent.Parameters.AddWithValue("@studentid", student.StudentId);
                 cmdUpdateStudent.Parameters.AddWithValue("@fullname", student.FullName);
+                cmdUpdateStudent.Parameters.AddWithValue("@phonenumber", student.PhoneNumber);
                 cmdUpdateStudent.ExecuteNonQuery();
                 
                 using NpgsqlCommand cmdUpdateGrades = new NpgsqlCommand(sqlUpdateGrades, con);
